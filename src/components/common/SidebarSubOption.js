@@ -30,7 +30,7 @@ function SidebarSubOption({title, roomInfo, Icon, id}) {
         roomInfo.roomUserIds.forEach(id => {
             id !== userId && db.doc('status/'+id).get()
             .then(doc => {
-                let lastChanged = doc.data().last_changed.seconds
+                let lastChanged = doc.data().lastChanged?.seconds || 0
                 let today = Math.floor(new Date().valueOf()/1000)
                 if(today - lastChanged > 900) {
                     db.doc('status/'+id).update({status: "offline"})
@@ -82,6 +82,7 @@ function SidebarSubOption({title, roomInfo, Icon, id}) {
                     roomUserIds: [userId],
                     roomType: 'userKeepbox',
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                    lastChanged: firebase.firestore.FieldValue.serverTimestamp(),
                 }).then(doc => {
                     dispatch(enterRoom({roomId: doc.id, roomType:'userKeepbox'}));
                     unload();
@@ -107,6 +108,7 @@ function SidebarSubOption({title, roomInfo, Icon, id}) {
                                 roomStr: newRoomStr,
                                 roomType: 'userFriends',
                                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                                lastChanged: firebase.firestore.FieldValue.serverTimestamp(),
                                 roomUserIds: [userId, friendId].sort(), 
                             }).then( newDoc => dispatch( enterRoom({roomId: newDoc.id, roomType: "userFriends"})) )
                         } else{
@@ -176,6 +178,7 @@ function SidebarSubOption({title, roomInfo, Icon, id}) {
                                 roomName,
                                 roomType: 'userRooms',
                                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+                                lastChanged: firebase.firestore.FieldValue.serverTimestamp(),
                                 roomUserIds, 
                             }).then( newDoc => dispatch( enterRoom({roomId: newDoc.id, roomType: "userRooms"})))
                         }

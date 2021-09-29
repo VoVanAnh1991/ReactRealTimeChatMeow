@@ -14,6 +14,8 @@ import Header from '../common/Header';
 
 function SignIn() {
   const [existedData,setExistedData] = useState({users: [], emails: []}); 
+  const dispatch = useDispatch();
+
   useEffect(() => {
     dispatch(setLoading({loading: false}));
     let existedUsernames=[], existedEmails=[];
@@ -40,7 +42,6 @@ function SignIn() {
   const [validateSignIn, setValidateSignIn] = useState({
     isInvalid: true,
     reStyleBtn: {filter: 'grayscale(100%)', pointerEvents: 'none'}});
-  const dispatch = useDispatch();
   const loading = useSelector(loadingState);
 
   const toggleView = (e) => {

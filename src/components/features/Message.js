@@ -2,18 +2,26 @@ import React from 'react';
 import styled from 'styled-components';
 import myCorner from '../../images/MyCorner.png';
 import otherCorner from '../../images/OtherCorner.png';
+import adminCorner from '../../images/AdminCorner.png';
 import { db } from '../../services/firebase/firebase'
 import { useDocumentData } from 'react-firebase-hooks/firestore';
 
 function Message({userId, messInfo}) {
-    const [userAvatar] = useDocumentData(userId && db.doc('users/'+messInfo.userId))
+    const [userInfo] = useDocumentData(userId && db.doc('users/'+messInfo.userId))
     const messDate=messInfo?.timestamp?.toDate().toLocaleString()
     const message = (<MessInfo>
-        <img alt='' src={messInfo.userId===userId? myCorner : otherCorner} />
-        <h4> {messInfo?.user}
+        <img alt='' src={messInfo.userId===userId? myCorner :
+                            messInfo.userId==='AdminTeam'? adminCorner: otherCorner} />
+        <h4> {userInfo?.nickname}
             <div>{messDate? messDate : 'Sending...'}</div>
         </h4>
-        <p>{messInfo?.message}    
+        <p>
+            {
+                messInfo?.message &&
+                    messInfo.message.includes('http')?
+                        <a target="_blank" rel="noreferrer" href={messInfo.message}>{messInfo.message}</a>
+                        : messInfo.message
+            }    
             {   
                 messInfo?.sticker &&
                 <MessStickerContainer>
@@ -28,13 +36,18 @@ function Message({userId, messInfo}) {
                 messInfo.userId===userId? 
                     <MyChatBox> 
                         {message}
-                        <img alt='' src={userAvatar?.avatar}/>
+                        <img alt='' src={userInfo?.avatar}/>
                     </MyChatBox>
-                    :
-                    <OtherChatBox>
-                        <img alt='' src={userAvatar?.avatar}/>
-                        {message}
-                    </OtherChatBox> 
+                    : messInfo.userId==='AdminTeam'?
+                        <AdminChatBox>
+                            <img alt='' src={userInfo?.avatar}/>
+                            {message}
+                        </AdminChatBox> 
+                        :
+                        <OtherChatBox>
+                            <img alt='' src={userInfo?.avatar}/>
+                            {message}
+                        </OtherChatBox> 
             }
         </MessContainer>
     )
@@ -117,7 +130,15 @@ const MyChatBox = styled.div `
             top: -11px;
             left: -5px;
         } 
+
+        > p a {
+            color: gold;
+            :visited {
+                color: darkgray;
+            }
+        }
     }
+    
 `;
 
 const OtherChatBox = styled.div `
@@ -134,5 +155,30 @@ const OtherChatBox = styled.div `
             top: -11px;
             right: -5px;
         } 
+    }
+`;
+
+const AdminChatBox = styled.div `
+    color: white;
+    justify-content: flex-start;
+    
+    > div {
+        position: relative;
+        background-color: var(--dark-main);
+        border: 2px solid #4E342E;
+
+        > img { 
+            width: 33px;
+            position: absolute;
+            top: -12px;
+            right: -8px;
+        }
+
+        > p a {
+            color: gold;
+            :visited {
+                color: darkgray;
+            }
+        }
     }
 `;

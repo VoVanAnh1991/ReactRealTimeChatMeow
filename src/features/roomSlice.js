@@ -17,12 +17,18 @@ export const roomSlice = createSlice({
         },
         setOption: (state, action) => { state.option = action.payload.option},
         setOptionId: (state, action) => { state.optionId = action.payload.optionId},
-        setOnManageRoom: (state, action) => {state.onManageRoom = action.payload}
+        setOnManageRoom: (state, action) => {state.onManageRoom = action.payload},
+        removeRoomOption: (state) => {
+            state.roomId = null;
+            state.roomType = null;
+            state.option = 'rooms';
+            state.optionId = 'rooms';
+        }
 
     }
 })
 
-export const { enterRoom, enterCollection, setOption, setOptionId, setOnManageRoom } = roomSlice.actions;
+export const { enterRoom, enterCollection, setOption, setOptionId, setOnManageRoom, removeRoomOption } = roomSlice.actions;
 export const roomIdState = (state) => state.room.roomId; 
 export const roomTypeState = (state) => state.room.roomType; 
 export const optionState = (state) => state.room.option; 

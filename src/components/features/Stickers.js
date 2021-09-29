@@ -5,7 +5,7 @@ import { db } from '../../services/firebase/firebase';
 import { IconButton } from '@material-ui/core';
 import AccountCircleIcon from '@material-ui/icons/AccountCircle';
 import { useDispatch } from 'react-redux';
-import { setSignIn, setUser } from '../../features/userSlice';
+import { setSignIn } from '../../features/userSlice';
 
 function Stickers({stickerSet, roomId, roomType, chatRef, user, userId}) {
     const dispatch = useDispatch();
@@ -15,7 +15,7 @@ function Stickers({stickerSet, roomId, roomType, chatRef, user, userId}) {
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             sticker: e.target.src,
             userId: userId,
-            user: user?.nickname,
+            user: user?.username,
         }
         roomType==='rooms'?
         db.collection('rooms').doc(roomId).collection('messages').add(messageInfo):
@@ -26,7 +26,10 @@ function Stickers({stickerSet, roomId, roomType, chatRef, user, userId}) {
         });
         
         roomType!=='rooms' && db.collection('userRooms').doc(roomId).update({
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            lastChanged: firebase.firestore.FieldValue.serverTimestamp(),
+        })
+        roomType==='rooms' && db.collection('rooms').doc(roomId).update({
+            lastChanged: firebase.firestore.FieldValue.serverTimestamp(),
         })
     }
 

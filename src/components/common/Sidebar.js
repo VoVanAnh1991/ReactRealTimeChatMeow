@@ -27,10 +27,10 @@ function Sidebar() {
     const dispatch = useDispatch();
     const [avatar, setAvatar] = useState(user.avatar);
     const [filteredRooms, setFilteredRooms] = useState([]);
-    const [rooms] = useCollection(db.collection('rooms'));
+    const [rooms] = useCollection(db.collection('rooms').orderBy('lastChanged','desc'));
     const [userData] = useDocument(db.doc(`users/${userId}`));
     const [userRooms] = useCollection( optionId && db.collection('userRooms')
-    .orderBy('timestamp','desc'));
+    .orderBy('lastChanged','desc'));
         
     useEffect(() => {
         userData && setAvatar(userData.data().avatar);

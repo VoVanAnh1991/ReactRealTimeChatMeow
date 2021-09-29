@@ -24,6 +24,7 @@ export const userSlice = createSlice({
         },
         removeUser: (state) => {
             state.user = removeLocalUser("userChatApp");
+            state.userId = null;
         },
     }
 })

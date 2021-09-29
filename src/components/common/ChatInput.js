@@ -28,7 +28,7 @@ function ChatInput({roomId, roomType, chatRef}) {
             message: input,
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
             userId: userId,
-            user: user?.nickname,
+            user: user?.username,
         }
         roomType==='rooms'?
             db.collection('rooms').doc(roomId).collection('messages').add(messageInfo):
@@ -38,7 +38,10 @@ function ChatInput({roomId, roomType, chatRef}) {
         });
 
         roomType!=='rooms' && db.collection('userRooms').doc(roomId).update({
-            timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+            lastChanged: firebase.firestore.FieldValue.serverTimestamp(),
+        })
+        roomType==='rooms' && db.collection('rooms').doc(roomId).update({
+            lastChanged: firebase.firestore.FieldValue.serverTimestamp(),
         })
 
         setInput('');

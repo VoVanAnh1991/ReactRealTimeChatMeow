@@ -9,22 +9,24 @@ import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 import BackspaceIcon from '@material-ui/icons/Backspace';
 import NotificationsActiveIcon  from '@material-ui/icons/NotificationsActive';
+import { removeRoomOption } from '../../features/roomSlice';
 
 function Header({PageSignIn, onSignOut}) {
     const [modal, setModal] = useState({isShown: false});
     const userId = useSelector(userIdState);
+    const user = useSelector(userState);
     const dispatch = useDispatch();
     const userStatusFirestoreRef = db.doc('/status/' + userId);
 
     const sendTaskToAdmin = () => {
         const task = prompt('Send Question to Admin:');
         if (task) {
-            db.collection('adminTeam').doc('task').collection('onGoingTask').add({
+            db.collection('adminTeam').doc('tasks').collection('ongoingTasks').add({
                 from: 'user',
-                status: "onGoing",
                 task,
                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                 userId: userId,
+                user: user.username,
             });
             alert(`Thank you! Your question is sent to our Admin Team. \n We will respond as soon as posible!`);
         }
@@ -46,8 +48,9 @@ function Header({PageSignIn, onSignOut}) {
                     { !PageSignIn && <ExitToAppIcon style={{backgroundColor: 'var(--dark-main)'}} 
                         onClick={()=>{ const askOnSignOut = window.confirm('Sign Out?');
                         if (askOnSignOut) {
-                            auth.signOut();
                             dispatch(removeUser());
+                            dispatch(removeRoomOption());
+                            auth.signOut();
                             userStatusFirestoreRef.set(onSignOut)
                             alert("You've Signed Out")}
                         }}/>

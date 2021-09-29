@@ -41,11 +41,11 @@ function UserPage() {
     const chatRef = useRef(null);
     const userStatusFirestoreRef = db.doc('/status/' + userId);
     const isOnline = {
-        last_changed: firebase.firestore.FieldValue.serverTimestamp(),
+        lastChanged: firebase.firestore.FieldValue.serverTimestamp(),
         status: "online",
     };
     const isOffline = {
-        last_changed: firebase.firestore.FieldValue.serverTimestamp(),
+        lastChanged: firebase.firestore.FieldValue.serverTimestamp(),
         status: "offline",
     };
 

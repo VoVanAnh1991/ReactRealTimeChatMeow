@@ -12,7 +12,7 @@ body {
   --light-main: #E8A5A5; /* (232, 165, 165) */
   --chat-header: 60px;
   --chat-input: 120px;
-  --chat-bottom: 15px;
+  --chat-bottom: 13px;
   --sidebar: calc(100vh - 25px);
   --sidebar-sm: calc(100vh - 25px);
   --sidebar-width: 230px;
