@@ -14,6 +14,13 @@ function ChatInput({roomId, roomType, chatRef}) {
     const inputRef = useRef();
     const [input, setInput] = useState('');
     const [stickerSet, setStickerSet] = useState('Happy-Kids');
+    const setLastVisited = () => {
+        (userId && roomId) && db.doc('users/'+userId+'/status/'+roomId).set({
+          lastVisited: firebase.firestore.FieldValue.serverTimestamp(),
+          roomId,
+          roomType,
+        })
+    }
 
     useEffect(() => {
         chatRef.current?.scrollIntoView({
@@ -23,6 +30,8 @@ function ChatInput({roomId, roomType, chatRef}) {
 
     const sendMessage = (e) => {
         e.preventDefault();
+        
+        setLastVisited();
         if (!roomId) return;
         let messageInfo={
             message: input,
@@ -30,19 +39,23 @@ function ChatInput({roomId, roomType, chatRef}) {
             userId: userId,
             user: user?.username,
         }
-        roomType==='rooms'?
-            db.collection('rooms').doc(roomId).collection('messages').add(messageInfo):
-            db.collection('userRooms').doc(roomId).collection('messages').add(messageInfo)
+        
         chatRef.current?.scrollIntoView({
             behavior: 'auto'
         });
 
-        roomType!=='rooms' && db.collection('userRooms').doc(roomId).update({
-            lastChanged: firebase.firestore.FieldValue.serverTimestamp(),
-        })
-        roomType==='rooms' && db.collection('rooms').doc(roomId).update({
-            lastChanged: firebase.firestore.FieldValue.serverTimestamp(),
-        })
+        if (roomType === 'rooms') {
+            db.collection('rooms').doc(roomId).collection('messages').add(messageInfo);
+            db.collection('rooms').doc(roomId).update({
+                lastChanged: firebase.firestore.FieldValue.serverTimestamp(),
+            })
+
+        } else {
+            db.collection('userRooms').doc(roomId).collection('messages').add(messageInfo);
+            db.collection('userRooms').doc(roomId).update({
+                lastChanged: firebase.firestore.FieldValue.serverTimestamp(),
+            })
+        }
 
         setInput('');
     }
@@ -53,7 +66,7 @@ function ChatInput({roomId, roomType, chatRef}) {
     }
     
     return (
-        <ChatInputContainer >
+        <ChatInputContainer>
             <StickerGallery> 
                 <StickerSetOptions>
                     <StickerSet>

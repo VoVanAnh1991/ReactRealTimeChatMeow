@@ -24,7 +24,7 @@ body {
   --sidebar-subOptions-sm: calc(var(--sidebar) - var(--sidebar-header-sm) - var(--sidebar-options) - var(--sidebar-hr)*2);
   --chat-section-width: calc(100vw - var(--sidebar-width));
   --chat-box: calc(100vh - var(--chat-header) - var(--chat-input) - 50px);
-
+color: rgb(109, 76, 65)
 
 /* 
   @media screen and (max-width: 700px), (max-height: 300px)
@@ -34,6 +34,28 @@ body {
 
   }
 */
+
+/* 
+
+ const setLastVisited = () => {
+        (userId && roomId) && db.doc('users/'+userId+'/status/'+roomId).set({
+            lastVisited: firebase.firestore.FieldValue.serverTimestamp(),
+            roomType,
+            roomId,
+        }) 
+    }
+    const setLastVisitedPara = (uI, rI, type) => {
+            db.doc('users/'+uI+'/status/'+rI).set({
+            lastVisited: firebase.firestore.FieldValue.serverTimestamp(),
+            roomType: type,
+            roomId: rI,
+        }) 
+    }
+
+
+*/
+
+/* Ngay cua version 2: 1633025400000 */
 
 }
 

@@ -1,8 +1,9 @@
 import { IconButton } from '@material-ui/core';
-import React, { useEffect, useState } from 'react'
-import { useCollection, useDocumentData } from 'react-firebase-hooks/firestore'
-import styled from 'styled-components'
-import { db } from '../../services/firebase/firebase'
+import React, { useEffect, useState } from 'react';
+import { useCollection, useDocumentData } from 'react-firebase-hooks/firestore';
+import styled from 'styled-components';
+import firebase from 'firebase';
+import { db } from '../../services/firebase/firebase';
 import DeleteForeverIcon from '@material-ui/icons/DeleteForever';
 import AddCircleRoundedIcon  from '@material-ui/icons/AddCircleRounded';
 import { enterRoom, setOnManageRoom } from '../../features/roomSlice';
@@ -24,7 +25,8 @@ function UserRoomInfo({display, roomId, roomType}) {
         let dummyArray=[];
         if (usersInfo && roomUsers) {
             usersInfo.docs.forEach(doc => {
-                if(roomUsers.includes(doc.id)) {
+                let [...rooms] = roomUsers;
+                if(rooms.includes(doc.id)) {
                     dummyArray.push({username: doc.data().username , nickname: doc.data().nickname})
                 }
             })
@@ -40,6 +42,14 @@ function UserRoomInfo({display, roomId, roomType}) {
             dispatch(enterRoom({roomId: null, roomType: null}));
             db.collection('userRooms').doc(roomId).delete();
         };
+    }
+
+    const setLastVisited = (id,visitedRoomId) => {
+        (id && visitedRoomId) && db.doc('users/'+id+'/status/'+visitedRoomId).set({
+            lastVisited: firebase.firestore.FieldValue.serverTimestamp(),
+            roomType,
+            roomId: visitedRoomId,
+        }) 
     }
 
     const addMember = () => {
@@ -59,6 +69,7 @@ function UserRoomInfo({display, roomId, roomType}) {
         else {
             if (newMember && userRoomData.roomUserIds.includes(existedId)) alert("\" " + newMember + " \" is already in this Room.")
             else {
+                setLastVisited(existedId,roomId);
                 db.collection('userRooms').doc(roomId).update({ roomUserIds: [...userRoomData.roomUserIds, existedId]});
             };
         }
@@ -84,7 +95,7 @@ function UserRoomInfo({display, roomId, roomType}) {
                         <InfoHeader> User List
                             {
                                 roomUserInfos?.map(user => 
-                                    <li>{ user.nickname } <br/> 
+                                    <li key={user.username}>{ user.nickname } <br/> 
                                     {
                                         user.nickname !== user.username &&
                                         <span>@ username: {user.username}</span>
@@ -98,7 +109,7 @@ function UserRoomInfo({display, roomId, roomType}) {
                         <InfoHeader> User List
                             {
                                 roomUserInfos?.map(user => 
-                                    <li>{ user.nickname } <br/> 
+                                    <li key={'members-'+user.username}> { user.nickname } <br/> 
                                     {
                                         user.nickname !== user.username &&
                                         <span>@ username: {user.username}</span>

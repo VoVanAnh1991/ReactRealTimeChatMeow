@@ -1,4 +1,4 @@
-import React, { useEffect } from 'react'
+import React from 'react'
 import styled from 'styled-components';
 import firebase from 'firebase';
 import { db } from '../../services/firebase/firebase';
@@ -9,7 +9,16 @@ import { setSignIn } from '../../features/userSlice';
 
 function Stickers({stickerSet, roomId, roomType, chatRef, user, userId}) {
     const dispatch = useDispatch();
+    const setLastVisited = () => {
+        (userId && roomId) && db.doc('users/'+userId+'/status/'+roomId).set({
+          lastVisited: firebase.firestore.FieldValue.serverTimestamp(),
+          roomType,
+          roomId,
+        })
+    }
+
     const sendSticker = (e) => {
+        setLastVisited();
         if (!roomId) return;
         let messageInfo={
             timestamp: firebase.firestore.FieldValue.serverTimestamp(),
@@ -49,10 +58,10 @@ function Stickers({stickerSet, roomId, roomType, chatRef, user, userId}) {
         <CollectionContainer>        
             {   stickerSet &&
                 ["01","02","03","04","05","06","07","08","09"].map(number=>
-                    <StickerContainer onRight={setAvatar}>
+                    <StickerContainer key={stickerSet+number}>
                         <IconButton  type='submit' onClick = {()=>setAvatar(number)}
                         > <AccountCircleIcon/> </IconButton>
-                        <img key={stickerSet+number} src={'https://my-meow-chat.web.app/Stickers/'+stickerSet+"/"+number+'.png'} 
+                        <img src={'https://my-meow-chat.web.app/Stickers/'+stickerSet+"/"+number+'.png'} 
                         alt=''  onClick={sendSticker}/>
                     </StickerContainer>
                 )

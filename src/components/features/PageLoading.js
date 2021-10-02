@@ -6,8 +6,8 @@ function PageLoading({marginBottom, color}) {
     return (
         <LoadingContainer>     
                <SemipolarSpinner id="spinner1" 
-               style={marginBottom && {marginBottom: marginBottom}} color={color? color : 'var(--dark-main)'} size={"300"}/>
-               <SemipolarSpinner id="spinner2" color={color? color : 'var(--dark-main)'} size={"250"}/>
+               style={marginBottom && {marginBottom: marginBottom}} color={color? color : 'var(--dark-main)'} size={300}/>
+               <SemipolarSpinner id="spinner2" color={color? color : 'var(--dark-main)'} size={250}/>
         </LoadingContainer>
     )
 }

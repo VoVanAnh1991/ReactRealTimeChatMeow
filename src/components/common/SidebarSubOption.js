@@ -5,9 +5,9 @@ import NightsStayIcon from '@material-ui/icons/NightsStay';
 import Brightness5IconOutlined from '@material-ui/icons/Brightness5Outlined';
 import { db } from '../../services/firebase/firebase';
 import firebase  from 'firebase';
-import { enterRoom, optionIdState, setOnManageRoom,} from '../../features/roomSlice';
+import { enterRoom, optionIdState, setOnManageRoom, roomIdState, roomTypeState } from '../../features/roomSlice';
 import { userIdState, userState } from '../../features/userSlice';
-import { useCollection, useCollectionDataOnce } from 'react-firebase-hooks/firestore';
+import { useCollection } from 'react-firebase-hooks/firestore';
 import InnerLoading from '../features/InnerLoading';
 
 
@@ -16,6 +16,8 @@ function SidebarSubOption({title, roomInfo, Icon, id}) {
     const user=useSelector(userState);
     const userId = useSelector(userIdState);
     const optionId = useSelector(optionIdState);
+    const roomId = useSelector(roomIdState);
+    const roomType = useSelector(roomTypeState);
     const [roomName, setRoomName] = useState('');
     const [status, setStatus] = useState();
     const [othersData, setOtherUsersData] = useState();
@@ -24,7 +26,14 @@ function SidebarSubOption({title, roomInfo, Icon, id}) {
     const [roomDatas, setRoomDatas] = useState();
     const [otherUsers] = useCollection(db.collection('users'));
     const [filteredRooms] = useCollection( optionId && db.collection('userRooms').where('roomType','==',optionId) )
-
+    const setLastVisited = (id,visitedRoomId) => {
+        (id && visitedRoomId) && db.doc('users/'+id+'/status/'+visitedRoomId).set({
+            lastVisited: firebase.firestore.FieldValue.serverTimestamp(),
+            roomType,
+            roomId: visitedRoomId,
+        }) 
+    }
+    
     useEffect(() => {
         if (roomInfo && roomInfo.roomType === "userFriends")
         roomInfo.roomUserIds.forEach(id => {
@@ -64,8 +73,9 @@ function SidebarSubOption({title, roomInfo, Icon, id}) {
     }, [optionId, roomInfo, filteredRooms, otherUsers])
 
     const selectSubOption = () => {
+        setLastVisited(userId, roomId);
         if(id){
-            dispatch(enterRoom({roomId: id, roomType: optionId}))
+            dispatch( enterRoom({roomId: id, roomType: optionId}) );
         }  
     };
     
@@ -83,8 +93,11 @@ function SidebarSubOption({title, roomInfo, Icon, id}) {
                     roomType: 'userKeepbox',
                     timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                     lastChanged: firebase.firestore.FieldValue.serverTimestamp(),
-                }).then(doc => {
-                    dispatch(enterRoom({roomId: doc.id, roomType:'userKeepbox'}));
+                }).then(newDoc => {
+                    db.doc(newDoc.path).update({ roomId: newDoc.id })
+                    setLastVisited(userId, newDoc.id);
+                    setLastVisited(userId, roomId);
+                    dispatch( enterRoom({roomId: newDoc.id, roomType:'userKeepbox'}) );
                     unload();
                 })
                 break;
@@ -110,9 +123,15 @@ function SidebarSubOption({title, roomInfo, Icon, id}) {
                                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                                 lastChanged: firebase.firestore.FieldValue.serverTimestamp(),
                                 roomUserIds: [userId, friendId].sort(), 
-                            }).then( newDoc => dispatch( enterRoom({roomId: newDoc.id, roomType: "userFriends"})) )
+                            }).then( newDoc => {
+                                db.doc(newDoc.path).update({ roomId: newDoc.id });
+                                [userId, friendId].forEach(user => setLastVisited(user, newDoc.id));
+                                setLastVisited(userId, roomId);
+                                dispatch( enterRoom({roomId: newDoc.id, roomType: "userFriends"})) 
+                            })
                         } else{
-                            dispatch(enterRoom({roomId: roomDatas[roomStrs.indexOf(newRoomStr)].id, roomType: "userFriends"}))
+                            setLastVisited(userId, roomId);
+                            dispatch( enterRoom({roomId: roomDatas[roomStrs.indexOf(newRoomStr)].id, roomType: "userFriends"}) )
                         }
                     }
                 }
@@ -180,7 +199,13 @@ function SidebarSubOption({title, roomInfo, Icon, id}) {
                                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                                 lastChanged: firebase.firestore.FieldValue.serverTimestamp(),
                                 roomUserIds, 
-                            }).then( newDoc => dispatch( enterRoom({roomId: newDoc.id, roomType: "userRooms"})))
+                            })
+                            .then( newDoc => {
+                                db.doc(newDoc.path).update({ roomId: newDoc.id })
+                                roomUserIds.forEach(user => setLastVisited(user,newDoc.id));
+                                setLastVisited(userId, roomId);
+                                dispatch( enterRoom({roomId: newDoc.id, roomType: "userRooms"}) )
+                            })
                         }
                     }
                 }

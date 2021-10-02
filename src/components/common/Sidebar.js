@@ -137,8 +137,8 @@ function Sidebar() {
                         (rooms && filteredRooms)?
                             optionId === 'rooms'?
                                 rooms?.docs.map( doc =>
-                                    <><SidebarSubOption key={doc.id} id={doc.id} Icon={StarIcon} 
-                                    roomInfo={doc.data()}  optionId={optionId}/></>
+                                    <span key={'rooms'+doc.id}><SidebarSubOption id={doc.id} Icon={StarIcon} 
+                                    roomInfo={doc.data()}  optionId={optionId}/></span>
                                 )
                                 :
                                 filteredRooms?.length === 0?
@@ -151,9 +151,9 @@ function Sidebar() {
                                     (<>
                                         <SidebarSubOption title={'add'} Icon={AddCommentIcon}/>
                                         {filteredRooms?.map( roomInfo =>
-                                        <SidebarSubOption key={roomInfo.id} id={roomInfo.id} Icon={StarIcon} 
-                                        roomInfo={roomInfo}/>
-                                    )}
+                                            <SidebarSubOption key={roomInfo.type+roomInfo.id} id={roomInfo.id} Icon={StarIcon} 
+                                            roomInfo={roomInfo}/>
+                                        )}
                                     </>)                                    
                             :
                             <LoadingContainer>
@@ -212,7 +212,7 @@ const SidebarAvatar = styled.div `
     
     > .MuiButtonBase-root {
         cursor: pointer;
-        z-index: 999;
+        z-index: 2;
         position: absolute;
         top: 0px;
         right: 30px;

@@ -48,15 +48,24 @@ function UserPage() {
         lastChanged: firebase.firestore.FieldValue.serverTimestamp(),
         status: "offline",
     };
+    const setLastVisited = () => {
+        (userId && roomId) && db.doc('users/'+userId+'/status/'+roomId).set({
+          lastVisited: firebase.firestore.FieldValue.serverTimestamp(),
+          roomType,
+          roomId,
+      })  
+    }
 
     firebase.database().ref('.info/connected').on('value', function(snapshot) {
             userStatusFirestoreRef.set(isOnline);
     });
 
     window.onbeforeunload = function () {        
+        setLastVisited();
         return userStatusFirestoreRef.set(isOffline);
     };   
     window.onunload = function () {
+        setLastVisited();
         userStatusFirestoreRef.set(isOffline);
         return userStatusFirestoreRef.set(isOffline);
     }; 
@@ -68,9 +77,12 @@ function UserPage() {
     });
     
     useEffect(() => {
-        (console.log('click tè lè'))
         setShowRoomInfo(false);
     },[roomId, optionId, roomDetails, userRoomDetails]);
+    
+    useEffect(() => {
+        setLastVisited();
+    },[roomId, roomType]);
 
     useEffect(() => {
         roomDetails && setRoomName(roomDetails.roomName);
@@ -84,14 +96,14 @@ function UserPage() {
     },[roomDetails, userRoomDetails, roomId]);
     
     const loading = (<>
-        <InnerLoading color={"var(--mid-main)"} size={"20"}/>
-        <InnerLoading color={"var(--mid-main)"} size={"20"}/>
-        <InnerLoading color={"var(--mid-main)"} size={"20"}/>
-        <InnerLoading color={"var(--mid-main)"} size={"20"}/>
-        <InnerLoading color={"var(--mid-main)"} size={"20"}/>
-        <InnerLoading color={"var(--mid-main)"} size={"20"}/>
-        <InnerLoading color={"var(--mid-main)"} size={"20"}/>
-        <InnerLoading color={"var(--mid-main)"} size={"20"}/>
+        <InnerLoading color={"var(--mid-main)"} size={20}/>
+        <InnerLoading color={"var(--mid-main)"} size={20}/>
+        <InnerLoading color={"var(--mid-main)"} size={20}/>
+        <InnerLoading color={"var(--mid-main)"} size={20}/>
+        <InnerLoading color={"var(--mid-main)"} size={20}/>
+        <InnerLoading color={"var(--mid-main)"} size={20}/>
+        <InnerLoading color={"var(--mid-main)"} size={20}/>
+        <InnerLoading color={"var(--mid-main)"} size={20}/>
     </>)
     
     return ( !user?
@@ -126,14 +138,14 @@ function UserPage() {
                     {   (roomMessages || userRoomMessages)?
                             (<AllMesseges> {
                                 roomType ==='rooms' ?  
-                                    roomMessages?.docs.map(mess => {
+                                    roomMessages?.docs.map((mess,index) => {
                                         const messInfo = mess.data()
-                                        return (<Message users={users} userId={userId} messInfo={messInfo}/>) 
+                                        return (<Message key={roomId+index} users={users} userId={userId} messInfo={messInfo}/>) 
                                     }) 
                                     : 
-                                    userRoomMessages?.docs.map(mess => {
+                                    userRoomMessages?.docs.map((mess,index) => {
                                         const messInfo = mess.data()
-                                        return (<Message users={users} userId={userId} messInfo={messInfo}/>) 
+                                        return (<Message key={roomId+index} users={users} userId={userId} messInfo={messInfo}/>) 
                                     })
                                 } 
                                 <ChatBottom ref={chatRef}/>
@@ -143,7 +155,10 @@ function UserPage() {
                         
                     }
                     { roomId?
-                        <ChatInput roomId={roomId} roomType={roomType} chatRef={chatRef}/>
+                        roomId.includes('ADMIN')?
+                            <></>
+                            :
+                            <ChatInput roomId={roomId} roomType={roomType} chatRef={chatRef}/>
                         :
                         <></>
                     }

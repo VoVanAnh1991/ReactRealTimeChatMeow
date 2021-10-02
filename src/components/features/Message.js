@@ -54,7 +54,7 @@ function Message({userId, messInfo}) {
 }
 
 export default Message
-const MessStickerContainer = styled.div `
+const MessStickerContainer = styled.span `
     flex: 1;
     > img {
         border-radius: 10px;

@@ -1,6 +1,5 @@
-import React, {useEffect, useState} from 'react';
+import React from 'react';
 import './App.css';
-// import SignIn from './components/features/SignIn';
 import {BrowserRouter as Router, Switch, Route} from 'react-router-dom';
 import PageUser from './components/features/PageUser';
 import PageNotFound from './components/features/PageNotFound';
@@ -23,9 +22,10 @@ function App() {
         </Auth>
         <ViewTooSmallContainer>
           <ViewTooSmall>
-            <h1>This web app <br/>is available <br/>for resolutions <br/>from 800x600
+            <div>
+              <h1>This web app <br/>is available <br/>for resolutions <br/>from 800x600</h1>
               <h2>Please try again <br/> with following options: <br/>*Maximizing your screen*,<br/>*Landscape mode*<br/>or *Another device*</h2>
-            </h1>
+            </div>
           </ViewTooSmall>
         </ViewTooSmallContainer>
       </Router>
@@ -61,17 +61,23 @@ const ViewTooSmall = styled.div `
   padding: 8vh;
   text-align: center;
   box-shadow: 0 1vh 1vh rgba(0, 0, 0, 0.25);
-  > h1 {
+
+  > div {
+    width: 100%;
+  }
+
+  > div h1 {
     width: 100%;
     font-size: 3vh;
     color: var(--dark-main);
     text-decoration: none;
-    > h2 {
-      line-height: 5vh;
-      width: 100%;
-      font-size: 3.3vh;
-      color: var(--mid-main);
-    }
-  }  
+  }
+    
+  > div h2 {
+    line-height: 5vh;
+    width: 100%;
+    font-size: 3.3vh;
+    color: var(--mid-main);
+  }
  
 `

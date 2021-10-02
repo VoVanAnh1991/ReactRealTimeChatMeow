@@ -6,6 +6,7 @@ const initialState = {
     optionId: 'rooms',
     option: 'rooms',
     onManageRoom: {loading: false, roomName: null},
+    haveNoti: null,
 }
 
 export const roomSlice = createSlice({
@@ -23,16 +24,18 @@ export const roomSlice = createSlice({
             state.roomType = null;
             state.option = 'rooms';
             state.optionId = 'rooms';
-        }
+        },
+        setHaveNoti: (state, action) => { state.haveNoti = action.payload}
 
     }
 })
 
-export const { enterRoom, enterCollection, setOption, setOptionId, setOnManageRoom, removeRoomOption } = roomSlice.actions;
+export const { enterRoom, enterCollection, setOption, setOptionId, setOnManageRoom, removeRoomOption, setHaveNoti } = roomSlice.actions;
 export const roomIdState = (state) => state.room.roomId; 
 export const roomTypeState = (state) => state.room.roomType; 
 export const optionState = (state) => state.room.option; 
 export const optionIdState = (state) => state.room.optionId; 
 export const onManageRoomState = (state) => state.room.onManageRoom; 
+export const haveNotiState = (state) => state.room.haveNoti; 
 
 export default roomSlice.reducer;
