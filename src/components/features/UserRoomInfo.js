@@ -40,8 +40,12 @@ function UserRoomInfo({display, roomId, roomType}) {
         let isDelete = window.confirm('Delete this Keep Box?');
         if (isDelete) {
             dispatch(enterRoom({roomId: null, roomType: null}));
+            db.collection('userRooms').doc(roomId).collection('messages').get().then(messages => {
+                messages.forEach(message => {
+                  db.doc('userRooms/'+roomId+'/messages/'+message.id).delete()
+                })
             db.collection('userRooms').doc(roomId).delete();
-        };
+        })}
     }
 
     const setLastVisited = (id,visitedRoomId) => {

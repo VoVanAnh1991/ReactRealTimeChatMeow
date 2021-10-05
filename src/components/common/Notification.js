@@ -129,7 +129,7 @@ const RoomLink = styled.p `
     margin: 5px 0px 0px;
 
     > img {
-        width: 50%;
+        width: 15vh;
         border-radius: 10px;
     }
 `
