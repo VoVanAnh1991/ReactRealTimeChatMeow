@@ -192,17 +192,19 @@ function SidebarSubOption({title, roomInfo, Icon, id}) {
                         if (!isCreate) cancel();
                         else {
                             alert(`Creating '${roomName}'`);
-                            let roomUserIds = userList && userList.map(username => othersData[othersUsername.indexOf(username)]?.id);
+                            let allUserIds = userList && userList.map(username => othersData[othersUsername.indexOf(username)]?.id);
                             db.collection('userRooms').add({
                                 roomName,
                                 roomType: 'userRooms',
                                 timestamp: firebase.firestore.FieldValue.serverTimestamp(),
                                 lastChanged: firebase.firestore.FieldValue.serverTimestamp(),
-                                roomUserIds, 
+                                createdBy: user.username,
+                                roomUserIds: [userId], 
+                                pendingIds: allUserIds.filter(id => id!== userId),
                             })
                             .then( newDoc => {
                                 db.doc(newDoc.path).update({ roomId: newDoc.id })
-                                roomUserIds.forEach(user => setLastVisited(user,newDoc.id));
+                                setLastVisited(userId,newDoc.id);
                                 setLastVisited(userId, roomId);
                                 dispatch( enterRoom({roomId: newDoc.id, roomType: "userRooms"}) )
                             })
@@ -221,10 +223,10 @@ function SidebarSubOption({title, roomInfo, Icon, id}) {
     return (
         <SubOptionContainer>
             { title?
-                <SubOptionChannel disabled={roomDatas? false : true } onClick={addSubOption}>
-                    <Icon style = {{color: 'var(--mid-main)'}}/>
-                    <span style={{marginLeft: '10px', color: 'var(--mid-main)'}}>Add {optionId.valueOf().replace('user','')}</span>
-                </SubOptionChannel>
+                <SubOptionAdd disabled={roomDatas? false : true } onClick={addSubOption}>
+                    <Icon/>
+                    <span>Add {optionId.valueOf().replace('user','')}</span>
+                </SubOptionAdd>
                 :
                 optionId!=="userFriends" ?
                     <SubOptionChannel onClick={selectSubOption}>
@@ -236,7 +238,7 @@ function SidebarSubOption({title, roomInfo, Icon, id}) {
                         <SubOptionChannel onClick={selectSubOption}>
                             { status==="online"?
                                 <Brightness5IconOutlined style={{color: 'orange'}}/>:
-                                <NightsStayIcon style={{color: 'gray'}}/>
+                                <NightsStayIcon style={{color: 'RosyBrown'}}/>
                             }
                             <span>{roomName}</span>
                         </SubOptionChannel>
@@ -256,7 +258,6 @@ const SubOptionContainer = styled.div`
     text-align: left;
     font-size: 13.5pt;
     font-weight: bold;
-    /* align-items: center; */
     cursor: pointer;
     margin: 10px 0;
     max-height: 60px;
@@ -275,15 +276,25 @@ const SubOptionContainer = styled.div`
         }
 
         :hover {
-        color: var(--dark-main) !important;
+            color: crimson; 
         }
     }
 `
 
 const SubOptionChannel = styled.div`
-    /* padding: 10px 20px; */
+    padding: 0 5px 0 10px;
+    color: var(--dark-main); 
+    opacity: 85%;
+    > span {
+        overflow: hidden;
+        width: 170px;
+        line-height: 20px;
+    }
+`
+
+const SubOptionAdd = styled.div`
     padding-left: 10px;
-    color: var(--light-main); 
+    color: var(--mid-main); 
     > span {
         overflow: hidden;
         width: 180px;

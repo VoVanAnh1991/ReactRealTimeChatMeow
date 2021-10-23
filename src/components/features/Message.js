@@ -5,39 +5,59 @@ import otherCorner from '../../images/OtherCorner.png';
 import adminCorner from '../../images/AdminCorner.png';
 import { db } from '../../services/firebase/firebase'
 import { useDocumentData } from 'react-firebase-hooks/firestore';
+import { DeleteSweep } from '@material-ui/icons';
+import { useSelector } from 'react-redux';
+import { roomIdState, roomTypeState } from '../../features/roomSlice';
 
-function Message({userId, messInfo}) {
-    const [userInfo] = useDocumentData(userId && db.doc('users/'+messInfo.userId))
-    const messDate=messInfo?.timestamp?.toDate().toLocaleString()
-    const message = (<MessInfo>
-        <img alt='' src={messInfo.userId===userId? myCorner :
-                            messInfo.userId==='AdminTeam'? adminCorner: otherCorner} />
-        <h4> {userInfo?.nickname}
-            <div>{messDate? messDate : 'Sending...'}</div>
-        </h4>
-        <p>
-            {
-                messInfo?.message &&
-                    messInfo.message.includes('http')?
-                        <a target="_blank" rel="noreferrer" href={messInfo.message}>{messInfo.message}</a>
-                        : messInfo.message
-            }    
-            {   
-                messInfo?.sticker &&
-                <MessStickerContainer>
-                <img alt='' src={messInfo.sticker}/> 
-                </MessStickerContainer>
-            }
-        </p>
-    </MessInfo>)
+function Message({userId, messInfo, messId}) {
+    const [userInfo] = useDocumentData(userId && db.doc('users/'+messInfo.userId));
+    const messDate=messInfo?.timestamp?.toDate().toLocaleString();
+    const roomId = useSelector(roomIdState);
+    const roomType = useSelector(roomTypeState);
+
+    const onDeleteMess = () => {
+        let isDelete = window.confirm('Deleting this message? Everyone won\'t see this message again.');
+        isDelete &&
+            db.doc('userRooms/'+roomId+'/messages/'+messId).delete();
+    }
+
+    const message = (
+        <MessInfo>
+            <img alt='' src={messInfo.userId===userId? myCorner :
+                                messInfo.userId==='AdminTeam'? adminCorner: otherCorner} />
+            <h4> {userInfo?.nickname}
+                <div>{messDate? messDate : 'Sending...'}</div>
+            </h4>
+            <p>
+                {
+                    messInfo?.message &&
+                        messInfo.message.includes('http')?
+                            <a target="_blank" rel="noreferrer" href={messInfo.message}>{messInfo.message}</a>
+                            : messInfo.message
+                }    
+                {   
+                    messInfo?.sticker &&
+                    <MessStickerContainer>
+                    <img alt='' src={messInfo.sticker}/> 
+                    </MessStickerContainer>
+                }
+            </p>
+        </MessInfo>
+    );
+
     return (
         <MessContainer>
             {   
-                messInfo.userId===userId? 
+                message && messInfo.userId===userId? 
                     <MyChatBox> 
                         {message}
                         <img alt='' src={userInfo?.avatar}/>
+                        {
+                            !['rooms','userRooms'].includes(roomType) &&
+                            <DeleteSweep onClick={onDeleteMess}/>
+                        }
                     </MyChatBox>
+                        
                     : messInfo.userId==='AdminTeam'?
                         <AdminChatBox>
                             <img alt='' src={userInfo?.avatar}/>
@@ -119,10 +139,12 @@ const MyChatBox = styled.div `
     color: white;
     justify-content: flex-end;
     padding-right: 20px;
-
+    position: relative;
+    
     > div {
         position: relative;
         background-color: var(--dark-main);
+        border: 2px solid #4E342E;
 
         > img {
             width: 33px;
@@ -137,9 +159,28 @@ const MyChatBox = styled.div `
                 color: darkgray;
             }
         }
+    }  
+
+    .MuiSvgIcon-root {
+        position: absolute;
+        bottom: -10px;
+        margin-right: 52px;
+        color: var(--dark-main);
+        opacity: 60%;
+        font-size: 20pt;
+        /* padding: 1px; */
+        cursor: pointer;
+        border-radius: 7px;
+        width: fit-content;
+
+        :hover {
+            opacity: 100%;
+            color: var(--dark-main);
+            background-color: rgba(255, 255, 255, 90%);
+        }
     }
-    
 `;
+
 
 const OtherChatBox = styled.div `
     color: var(--dark-main);
@@ -148,12 +189,13 @@ const OtherChatBox = styled.div `
     > div {
         position: relative;
         background-color: white;
+        border: 2px solid var(--dark-main);
 
         > img { 
             width: 33px;
             position: absolute;
-            top: -11px;
-            right: -5px;
+            top: -12px;
+            right: -9px;
         } 
     }
 `;

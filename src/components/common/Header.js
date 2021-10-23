@@ -10,8 +10,10 @@ import HelpOutlineIcon from '@material-ui/icons/HelpOutline';
 import ExitToAppIcon from '@material-ui/icons/ExitToApp';
 import InfoOutlinedIcon from '@material-ui/icons/InfoOutlined';
 import NotificationsActiveIcon  from '@material-ui/icons/NotificationsActive';
+import EmojiPeopleIcon from '@material-ui/icons/EmojiPeople';
 import InnerLoading from '../features/InnerLoading';
 import Notification from './Notification';
+import PendingInvitation from './PendingInvitation';
 
 function Header({PageSignIn, onSignOut}) {
     const dispatch = useDispatch();
@@ -21,7 +23,9 @@ function Header({PageSignIn, onSignOut}) {
     const user = useSelector(userState);
     const haveNoti = useSelector(haveNotiState);
     const [modalIsShown, setModalIsShown] = useState(false);
+    const [selectedModal, setSelectedModal] = useState(null);
     const [notiRoomsState, setNotiRoomsState] = useState();
+    const [invitationsState, setInvitationState] = useState();
     const [loading, setLoading] = useState(true);
     
     const userStatusFirestoreRef = db.doc('/status/' + userId);
@@ -30,7 +34,9 @@ function Header({PageSignIn, onSignOut}) {
     const [watchingUserRooms] = useCollectionData( userId &&
         db.collection('userRooms').where('roomUserIds','array-contains',userId)
     );
-    
+    const [watchingInvitations] = useCollectionData( userId &&
+        db.collection('userRooms').where('pendingIds','array-contains',userId)
+    );
     const setLastVisited = () => {
         (userId && roomId) && db.doc('users/'+userId+'/status/'+roomId).set({
             lastVisited: firebase.firestore.FieldValue.serverTimestamp(),
@@ -41,8 +47,9 @@ function Header({PageSignIn, onSignOut}) {
     
     useEffect(() => {
         !notiRoomsState && dispatch ( setHaveNoti(false) );
-        (!haveNoti && modalIsShown) && toggleModal();
-    },[notiRoomsState, haveNoti])
+        (!haveNoti && modalIsShown) && toggleModal('noti');
+        (!invitationsState && modalIsShown) && toggleModal('invitation');
+    },[notiRoomsState, haveNoti, invitationsState])
     
     useEffect(() => {
         setLoading(true);
@@ -50,7 +57,8 @@ function Header({PageSignIn, onSignOut}) {
         let notificatedRooms = [];
         if (watchingRooms && watchingUserRooms && lastVisitedStatuses) {
             let roomStatuses = lastVisitedStatuses.map(status => status.roomId);
-            thisUserAllRooms = [...watchingRooms, ...watchingUserRooms]
+            thisUserAllRooms = [...watchingRooms, ...watchingUserRooms];
+            thisUserAllRooms.sort((a, b) => b.lastChanged - a.lastChanged);
             thisUserAllRooms.forEach((room,index) => {
                 if (roomStatuses.includes(room.roomId)) {
                     let statusIndex = roomStatuses.indexOf(room.roomId);
@@ -72,23 +80,37 @@ function Header({PageSignIn, onSignOut}) {
         }
         setLoading(false);
     },[watchingRooms, watchingUserRooms, lastVisitedStatuses])
+
+    useEffect(() => {
+        setLoading(true);
+        let newInvitations = [];
+        if (watchingInvitations ) {
+            watchingInvitations.forEach(invitation=>newInvitations.push(invitation));
+            newInvitations.length > 0?
+            setInvitationState(newInvitations):
+            setInvitationState(null);
+        }
+        setLoading(false);
+    },[watchingInvitations])
     
-    const toggleModal = () => {
-        if (modalIsShown)
-        {   
-            let topping=null;
-            let position=0;
-            let element=document.getElementById("modal");
-            clearInterval(topping);
-            const modalUp = () => {
-                if ( position === -60 ) clearInterval(topping);
-                else {
-                    position = position-10;
-                    element.style.top = position + "vh";
-                }                
+    const toggleModal = (e) => {
+        setSelectedModal(e);
+        if (modalIsShown) {   
+            if (e === selectedModal) {
+                let topping=null;
+                let position=0;
+                let element=document.getElementById("modal");
+                clearInterval(topping);
+                const modalUp = () => {
+                    if ( position === -60 ) clearInterval(topping);
+                    else {
+                        position = position-10;
+                        element.style.top = position + "vh";
+                    }                
+                }
+                topping = setInterval(modalUp, 40)
+                setModalIsShown(false);
             }
-            topping = setInterval(modalUp, 40)
-            setModalIsShown(false);
         } else {
             let downing = null;
             let position = -60;
@@ -104,6 +126,7 @@ function Header({PageSignIn, onSignOut}) {
             downing = setInterval(modalDown, 40);
             setModalIsShown(true);
         }
+    
     }
 
     const sendTaskToAdmin = () => {
@@ -124,7 +147,11 @@ function Header({PageSignIn, onSignOut}) {
         <>
             <HeaderContainer>
                 <HeaderRight>
-                    { (!PageSignIn && haveNoti ) && <NotificationsActiveIcon onClick={toggleModal}
+                    { (!PageSignIn && haveNoti ) && <NotificationsActiveIcon onClick={()=>toggleModal('noti')}
+                        style={ {backgroundColor: 'red'} } /> 
+                    }
+
+                    {  (!PageSignIn && invitationsState) && <EmojiPeopleIcon onClick={()=>toggleModal('invitation')}
                         style={ {backgroundColor: 'red'} } /> 
                     }
 
@@ -148,25 +175,34 @@ function Header({PageSignIn, onSignOut}) {
             </HeaderContainer>
 
             <ShowingModal id="modal">
-                <NotificationsContainer>
-                    {
-                        !loading?
-                            notiRoomsState?
+                {   selectedModal!=='invitation' ?
+                    <SelectedModalContainer>
+                        {
+                            notiRoomsState &&
                                 notiRoomsState.map( (room,index) =>
                                     <Notification key={'noti-'+index} notification={room}/>
                                 )
-                                :
-                                <Notification/>
-                                
-                            : 
-                            <SpinnerContainer>
-                                <InnerLoading size={30} />
-                                <InnerLoading size={30} />
-                                <InnerLoading size={30} />
-                            </SpinnerContainer>
-                    }
+                        }
 
-                </NotificationsContainer>
+                    </SelectedModalContainer>
+                    :
+                    <SelectedModalContainer>
+                        {
+                            !loading ?
+                                invitationsState &&
+                                invitationsState.map( (invitation,index) =>
+                                    <PendingInvitation key={'invi-'+index} invitation={invitation}/>
+                                )
+                                :
+                                <SpinnerContainer>
+                                    <InnerLoading size={30} />
+                                    <InnerLoading size={30} />
+                                    <InnerLoading size={30} />
+                                </SpinnerContainer>
+                        }
+
+                    </SelectedModalContainer>
+                }
             </ShowingModal>
         </>
     )
@@ -216,7 +252,7 @@ const ShowingModal = styled.div `
     display: flex;
     justify-content: center;
     position: fixed;
-    right: 170px;
+    right: 190px;
     top: -60vh;
     width: 30vw;
     height: 50vh;
@@ -228,7 +264,7 @@ const ShowingModal = styled.div `
     padding: 0 10px 10px;
 `
 
-const NotificationsContainer = styled.div `
+const SelectedModalContainer = styled.div `
     height: 100%;
     width: 100%;
     border-radius: 0 0 15px 15px;

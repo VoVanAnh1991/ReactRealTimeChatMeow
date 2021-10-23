@@ -28,6 +28,10 @@ function ChatInput({roomId, roomType, chatRef}) {
         });
     });
 
+    useEffect(() => {
+        setInput('');
+    },[roomId]);
+
     const sendMessage = (e) => {
         e.preventDefault();
         
@@ -182,7 +186,6 @@ const StickerSet = styled.div`
     
     width: 100%;
     margin-bottom: 5px;
-    /* padding: 6.5px; */
     border-radius: 20px;
     border: 2.5px solid var(--dark-main);
     background-color: white;

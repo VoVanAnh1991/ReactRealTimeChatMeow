@@ -10,7 +10,7 @@ import { userIdState } from '../../features/userSlice';
 import { enterRoom, roomIdState, roomTypeState, setHaveNoti } from '../../features/roomSlice';
 
 function Notifications({notification}) {
-    const notiRoom = notification?.roomId.valueOf();
+    const notiRoom = notification?.roomId?.valueOf();
     const [roomNameState, setRoomNameState] = useState(null);
     const [noOfNotiState, setNoOfNotiState] = useState('');
     const dispatch = useDispatch();
@@ -54,7 +54,7 @@ function Notifications({notification}) {
     return (
         <>
             {   
-                notification?
+                noOfNotiState?
                     <NotificationDetail onClick={ () =>  { setLastVisited()
                             dispatch(enterRoom({roomId:  notification.roomId, roomType: notification.roomType})); 
                         }}>

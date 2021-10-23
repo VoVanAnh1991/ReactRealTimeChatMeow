@@ -1,4 +1,4 @@
-import { IconButton } from '@material-ui/core';
+import { ButtonGroup, IconButton } from '@material-ui/core';
 import React, { useEffect, useState } from 'react';
 import { useCollection, useDocumentData } from 'react-firebase-hooks/firestore';
 import styled from 'styled-components';
@@ -7,17 +7,29 @@ import { db } from '../../services/firebase/firebase';
 import DeleteForeverIcon from '@material-ui/icons/DeleteForever';
 import AddCircleRoundedIcon  from '@material-ui/icons/AddCircleRounded';
 import { enterRoom, setOnManageRoom } from '../../features/roomSlice';
-import { useDispatch } from 'react-redux';
+import { useDispatch, useSelector } from 'react-redux';
+import { userIdState, userState } from '../../features/userSlice';
+import { EditRounded, MeetingRoomRounded, RemoveCircleRounded } from '@material-ui/icons';
 
 function UserRoomInfo({display, roomId, roomType}) {
+    const user = useSelector(userState);
+    const userId = useSelector(userIdState);
     const [roomUsers, setRoomUsers] = useState();
-    const [roomUserInfos, setroomUserInfos] = useState();
+    const [roomUserInfos, setRoomUserInfos] = useState();
+    const [pendingUsers, setPendingUsers] = useState();
+    const [pendingUserInfos, setPendingUserInfos] = useState();
+    const roomRef = db.doc("userRooms/"+roomId);
+    const roomMessagesRef = db.collection("userRooms/"+roomId+"/messages");
     const [userRoomData] = useDocumentData(roomId && db.doc('userRooms/'+roomId));
     const [usersInfo] = useCollection(db.collection('users/'));
     const dispatch = useDispatch();
+    
     useEffect(() => {
         if (roomType !== 'rooms' && roomType !== 'userKeepbox') {
-            userRoomData && userRoomData && setRoomUsers(userRoomData.roomUserIds)
+            if (userRoomData) {
+                setRoomUsers(userRoomData.roomUserIds);
+                setPendingUsers(userRoomData.pendingIds);
+            } 
         }
     },[roomId,userRoomData])
     
@@ -30,14 +42,41 @@ function UserRoomInfo({display, roomId, roomType}) {
                     dummyArray.push({username: doc.data().username , nickname: doc.data().nickname})
                 }
             })
-            setroomUserInfos(dummyArray);
+            setRoomUserInfos(dummyArray);
         }
-
     },[roomUsers])
 
-    const deleteKeepbox = () => {
+    useEffect(() => {
+        let dummyArray=[];
+        if (usersInfo && pendingUsers) {
+            usersInfo.docs.forEach(doc => {
+                let [...pending] = pendingUsers;
+                if(pending.includes(doc.id)) {
+                    dummyArray.push({username: doc.data().username , nickname: doc.data().nickname})
+                }
+            })
+            setPendingUserInfos(dummyArray);
+        }
+    },[pendingUsers])
+
+    const actionMessage= (e)=>{
+        roomMessagesRef.add({
+        message: `${user.username} ${e}`,
+        timestamp: firebase.firestore.FieldValue.serverTimestamp(),
+        userId: userId,
+    })}
+
+    const setLastVisited = (id,visitedRoomId) => {
+        (id && visitedRoomId) && db.doc('users/'+id+'/status/'+visitedRoomId).set({
+            lastVisited: firebase.firestore.FieldValue.serverTimestamp(),
+            roomType,
+            roomId: visitedRoomId,
+        }) 
+    }
+
+    const deleteRoom = () => {
         setOnManageRoom({loading: true})
-        let isDelete = window.confirm('Delete this Keep Box?');
+        let isDelete = window.confirm('Delete this room? All messages will be deleted forever.');
         if (isDelete) {
             dispatch(enterRoom({roomId: null, roomType: null}));
             db.collection('userRooms').doc(roomId).collection('messages').get().then(messages => {
@@ -48,12 +87,35 @@ function UserRoomInfo({display, roomId, roomType}) {
         })}
     }
 
-    const setLastVisited = (id,visitedRoomId) => {
-        (id && visitedRoomId) && db.doc('users/'+id+'/status/'+visitedRoomId).set({
-            lastVisited: firebase.firestore.FieldValue.serverTimestamp(),
-            roomType,
-            roomId: visitedRoomId,
-        }) 
+    const removeMember = () => {
+        let removedUsername = prompt("Please enter removed member's username");
+        if(removedUsername){
+            let removedId;
+            usersInfo.docs.forEach(doc => {
+                if (doc.data().username === removedUsername)
+                {
+                    removedId = doc.id;
+                    return;
+                }
+                return;
+            })
+
+            if (userRoomData.roomUserIds.includes(removedId)){
+                roomRef.update({
+                    roomUserIds: [...userRoomData.roomUserIds.filter(id => id !== removedId)]
+                })
+                .then(
+                    actionMessage(`has removed ${removedUsername} out of this room.`)
+                )
+            } else if (userRoomData.pendingIds.includes(removedId)) {
+                roomRef.update({
+                    pendingIds: [...userRoomData.pendingIds.filter(id => id !== removedId)]
+                })
+            } else {
+                alert(removedUsername+` is not in this room.`)
+            }
+        }
+        
     }
 
     const addMember = () => {
@@ -68,37 +130,97 @@ function UserRoomInfo({display, roomId, roomType}) {
                 }
                 return;
             })
-        }    
-        if (!existedId) alert('Username is not existedId');
-        else {
-            if (newMember && userRoomData.roomUserIds.includes(existedId)) alert("\" " + newMember + " \" is already in this Room.")
+            
+            if (!existedId) alert('Username is not existedId')
             else {
-                setLastVisited(existedId,roomId);
-                db.collection('userRooms').doc(roomId).update({ roomUserIds: [...userRoomData.roomUserIds, existedId]});
-            };
+                let allUserIds=[...userRoomData.roomUserIds,...userRoomData.pendingIds];
+                if (newMember && allUserIds.includes(existedId)) alert("\" " + newMember + " \" is already in this Room.")
+                else {
+                    setLastVisited(existedId,roomId);
+                    db.collection('userRooms').doc(roomId).update({ pendingIds: [...userRoomData.pendingIds, existedId]});
+                };
+            }
+        }    
+    }
+
+    const editName = () => {
+        let newName = prompt('Please enter new room-name',userRoomData.roomName);
+        if (newName) {
+            roomRef.update({ roomName: newName })
+            .then(userRoomData.roomType!=="userKeepbox" && actionMessage(`has changed room-name into ${newName}.`));
         }
+    }
+
+    const leaveRoom = () => {
+        roomRef.update({ roomUserIds: userRoomData?.roomUserIds.filter(id => id !== userId)})
+            .then(()=>{
+                dispatch(enterRoom({roomId: null, roomType: null}));
+                actionMessage(`has left this room.`)
+            });
     }
 
     return ( <> 
         { roomType==='rooms'?
             <UserRoomInfoContainer style={{display: display}} >
-                <InfoHeader><p>This is a public room for every Meow's users.</p></InfoHeader>
+                <InfoDetails><p>This is a public room for every Meow's users.</p></InfoDetails>
             </UserRoomInfoContainer>
             :
             roomType==='userKeepbox'?
                 <UserRoomInfoContainer style={{display: display}} >
-                    <IconButton  type='submit' onClick = {deleteKeepbox}
-                    > <DeleteForeverIcon style={{fontSize: '28pt'}}/> </IconButton>
-                    <InfoHeader><span>This is your private Keepbox.</span></InfoHeader>
+                    <ButtonGroup
+                            size="small"
+                            aria-label="contained button group"
+                            variant="text"
+                        >
+                        <IconButton  style={{color: 'CornflowerBlue'}} 
+                        > <EditRounded onClick={editName} style={{fontSize: '22pt'}}/> </IconButton>
+                        <IconButton onClick={deleteRoom} style={{color: 'indianred'}} 
+                        > <DeleteForeverIcon style={{fontSize: '22pt'}}/> </IconButton>
+                    </ButtonGroup>
+
+                    <InfoDetails><span>Personal Keepbox.</span></InfoDetails>
                 </UserRoomInfoContainer>
                 :
                 roomType==='userRooms'?
                     <UserRoomInfoContainer style={{display: display}} >
-                        <IconButton  type='submit' style={{color: 'mediumseagreen'}} onClick = {addMember}
-                            > <AddCircleRoundedIcon style={{fontSize: '28pt'}}/> </IconButton>
-                        <InfoHeader> User List
+                        <ButtonGroup
+                            size="small"
+                            aria-label="contained button group"
+                            variant="text"
+                        >
+                            <IconButton  style={{color: 'CornflowerBlue'}} 
+                            > <EditRounded onClick={editName} style={{fontSize: '22pt'}}/> </IconButton>
+                            <IconButton style={{color: 'mediumseagreen'}} 
+                            > <AddCircleRoundedIcon onClick={addMember} style={{fontSize: '22pt'}}/> </IconButton>
+                            { userRoomData?.createdBy !== user.username &&
+                                <IconButton style={{color: 'indianred'}} 
+                                > <MeetingRoomRounded onClick={leaveRoom} style={{fontSize: '22pt'}}/> </IconButton>
+                            }
+                            { userRoomData?.createdBy === user.username &&
+                                <IconButton onClick={removeMember} style={{color: 'orange'}} 
+                                > <RemoveCircleRounded style={{fontSize: '22pt'}}/> </IconButton>
+                            }
+                            { userRoomData?.createdBy === user.username &&
+                                <IconButton onClick={deleteRoom} style={{color: 'indianred'}} 
+                                > <DeleteForeverIcon style={{fontSize: '22pt'}}/> </IconButton>
+                            }
+                        </ButtonGroup>
+                        
+                        <InfoDetails> User List
                             {
                                 roomUserInfos?.map(user => 
+                                    <li key={user.username}>{ user.nickname }<br/> 
+                                    {
+                                        user.nickname !== user.username &&
+                                        <span>@ username: {user.username}</span>
+                                    }    
+                                    {userRoomData.createdBy === user.username && <i>(admin)</i>}
+                                    </li>)
+                            }
+                        </InfoDetails>
+                        <InfoDetails> { pendingUsers?.length > 0 && <b>Pending Invitations</b>}
+                            {   pendingUsers &&
+                                pendingUserInfos?.map(user => 
                                     <li key={user.username}>{ user.nickname } <br/> 
                                     {
                                         user.nickname !== user.username &&
@@ -106,11 +228,20 @@ function UserRoomInfo({display, roomId, roomType}) {
                                     }    
                                     </li>)
                             }
-                        </InfoHeader>
+
+                        </InfoDetails>
                     </UserRoomInfoContainer>
                     :
                     <UserRoomInfoContainer style={{display: display}} >
-                        <InfoHeader> User List
+                        <ButtonGroup
+                            size="small"
+                            aria-label="contained button group"
+                            variant="text"
+                        >
+                            <IconButton onClick={deleteRoom} style={{color: 'indianred'}} 
+                            > <DeleteForeverIcon style={{fontSize: '22pt'}}/> </IconButton>  
+                        </ButtonGroup>
+                        <InfoDetails> User List
                             {
                                 roomUserInfos?.map(user => 
                                     <li key={'members-'+user.username}> { user.nickname } <br/> 
@@ -120,7 +251,7 @@ function UserRoomInfo({display, roomId, roomType}) {
                                     }    
                                     </li>)
                             }
-                        </InfoHeader>
+                        </InfoDetails>
                     </UserRoomInfoContainer>
                 
                 
@@ -161,11 +292,9 @@ const UserRoomInfoContainer = styled.div `
                 padding: 20px;
             }
         }
-        
-       
     }
 
-    >.MuiButtonBase-root {
+    >.MuiButtonGroup-root {
             position: absolute;
             right: 0;
             top: -2px;
@@ -189,6 +318,6 @@ const UserRoomInfoContainer = styled.div `
     }
 `
 
-const InfoHeader = styled.div `
+const InfoDetails = styled.div `
     position: static;
 `

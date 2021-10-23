@@ -1,5 +1,5 @@
 body {
-  
+  --background-image:'%PUBLIC_URL%/Background.jpg';
   margin: 0;
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
     'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
@@ -24,54 +24,10 @@ body {
   --sidebar-subOptions-sm: calc(var(--sidebar) - var(--sidebar-header-sm) - var(--sidebar-options) - var(--sidebar-hr)*2);
   --chat-section-width: calc(100vw - var(--sidebar-width));
   --chat-box: calc(100vh - var(--chat-header) - var(--chat-input) - 50px);
-color: rgb(109, 76, 65)
-
-/* 
-  @media screen and (max-width: 700px), (max-height: 300px)
-   { display: flex; } 
-
-  @media screen and (max-height: 450px) { 
-
-  }
-*/
-
-/* 
-
- const setLastVisited = () => {
-        (userId && roomId) && db.doc('users/'+userId+'/status/'+roomId).set({
-            lastVisited: firebase.firestore.FieldValue.serverTimestamp(),
-            roomType,
-            roomId,
-        }) 
-    }
-    const setLastVisitedPara = (uI, rI, type) => {
-            db.doc('users/'+uI+'/status/'+rI).set({
-            lastVisited: firebase.firestore.FieldValue.serverTimestamp(),
-            roomType: type,
-            roomId: rI,
-        }) 
-    }
-
-
-*/
-
-/* Ngay cua version 2: 1633025400000 */
-
+  color: rgb(109, 76, 65)
 }
-
-
 
 code {
   font-family: source-code-pro, Menlo, Monaco, Consolas, 'Courier New',
     monospace;
 }
-
-/* Mã Room: vvaKeepBox , vaKeepBox, vvaDevKeepBox, va-vva, vva-vvaDev, vvaDev-va, VAGroups */
-/* Mã user: 
-vvaDev: GS0nPLU89B8ScJPRdKbI,  
-va: QI7N8Sd8r87lIuo0wlop, 
-vva: h6iHe5nrEQfUyxv6Zdhh
-*/
-/* name, timestamp, roomStr, roomUserIds, roomType */
-/* userFriends userRooms 22:00:00*/
-/* https://my-meow-chat.web.app/   */

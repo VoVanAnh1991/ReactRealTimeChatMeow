@@ -1,14 +1,10 @@
 import React from 'react';
 import styled from "styled-components";
-import { useDispatch, useSelector } from 'react-redux';
-import { setOption, setOptionId,
-    optionIdState, roomIdState, roomTypeState } from '../../features/roomSlice';
+import { useDispatch } from 'react-redux';
+import { setOption, setOptionId } from '../../features/roomSlice';
 
 function SidebarOption({title, Icon }) {
     const dispatch = useDispatch();
-    // const roomId = useSelector(roomIdState);
-    // const roomType = useSelector(roomTypeState);
-    // const optionId = useSelector(optionIdState);
     const onSidebarOptionClick = () => {
         dispatch(setOption({option: title})); 
         dispatch(setOptionId({optionId: title.replace('Meow ','user').replace('Public R','r')}));
@@ -34,10 +30,6 @@ const OptionChannel = styled.div`
         font-weight: 600;
         font-size: 14pt;
         text-shadow: 2px 1px 1px var(--dark-main);
-
-        :hover {
-            text-shadow: 0px 0px ;
-        }
     }
 `
 const OptionContainer = styled.div`
@@ -64,7 +56,11 @@ const OptionContainer = styled.div`
         }
 
         :hover {
-        color: var(--dark-main);
+            color: var(--mid-main);
+            
+            > span {
+                text-shadow: 0px 0px ;  
+            }
         }
     }
 `

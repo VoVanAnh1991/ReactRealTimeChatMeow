@@ -198,7 +198,7 @@ const SidebarHeader = styled.div `
 
     height: var(--sidebar-header);
     position: relative;
-    padding: 10px;
+    padding-top: 10px ;
     padding-bottom: 0px;
     width: 100%;
 `
@@ -223,7 +223,6 @@ const SidebarAvatar = styled.div `
         :hover {
             color: var(--mid-main);
             background-color: white;
-
         }
     }
 `

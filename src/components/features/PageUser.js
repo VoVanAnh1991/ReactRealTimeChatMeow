@@ -78,7 +78,7 @@ function UserPage() {
     
     useEffect(() => {
         setShowRoomInfo(false);
-    },[roomId, optionId, roomDetails, userRoomDetails]);
+    },[roomId, optionId]);
     
     useEffect(() => {
         setLastVisited();
@@ -140,12 +140,12 @@ function UserPage() {
                                 roomType ==='rooms' ?  
                                     roomMessages?.docs.map((mess,index) => {
                                         const messInfo = mess.data()
-                                        return (<Message key={roomId+index} users={users} userId={userId} messInfo={messInfo}/>) 
+                                        return (<Message key={roomId+index} users={users} userId={userId} messId={mess.id} messInfo={messInfo}/>) 
                                     }) 
                                     : 
                                     userRoomMessages?.docs.map((mess,index) => {
                                         const messInfo = mess.data()
-                                        return (<Message key={roomId+index} users={users} userId={userId} messInfo={messInfo}/>) 
+                                        return (<Message key={roomId+index} users={users} userId={userId} messId={mess.id} messInfo={messInfo}/>) 
                                     })
                                 } 
                                 <ChatBottom ref={chatRef}/>
@@ -176,8 +176,8 @@ const PageUserContainer = styled.div `
 
     font-family: 'Lucida Grande', Verdana, sans-serif;
     font-size: 12pt;
-    background-color: rgba(255, 190, 191, 4%);
-
+    height: 100vh;
+    background-color: rgba(215, 205, 215, 20%);
 `
 
 const ChatHeader = styled.div `
@@ -185,9 +185,9 @@ const ChatHeader = styled.div `
     height: var(--chat-header);
     padding: 5px 10px;
     border-bottom: 2px solid var(--dark-main);
-    background-color: rgba(255, 255, 255, 50%);
     color: var(--dark-main);
     word-break: break-word;
+    background-color: rgba(255, 255, 255, 50%);
 
     > h1 {
         flex: 0.05;
@@ -268,7 +268,6 @@ const AllMesseges = styled.div `
     
     ::-webkit-scrollbar {
         width: 13px;
-        /* height: 30px; */
     }
 
     ::-webkit-scrollbar-track {
